@@ -1,37 +1,43 @@
-
-##############################################################
+################################################################################
 #
-# AESD-ASSIGNMENTS
+# aesd-assignments
 #
-##############################################################
-
-#TODO: Fill up the contents below in order to reference your assignment 3 git contents
-AESD_ASSIGNMENTS_VERSION = 5591cdb # this hash for (tag: assignment-4-part-1) Merge remote-tracking branch 'assignments-base/assignment4',
-				   # Used this hash because it contains the modificaitons made for finder-test.sh
-
-# Note: Be sure to reference the *ssh* repository URL here (not https) to work properly
-# with ssh keys and the automated build/test system.
-# Your site should start with git@github.com:
-
+################################################################################
+# Version needs to be updated to the latest commit ID of your aesd-assignments repo
+# This should be the commit ID where you added the aesdsocket-start-stop script
+# You can get this by running 'git rev-parse HEAD' in your aesd-assignments/server directory
+AESD_ASSIGNMENTS_VERSION = 2e4c588254787933c94a0fd8bc812618a4f83a52
 AESD_ASSIGNMENTS_SITE = git@github.com:cu-ecen-aeld/assignments-3-and-later-Little3gy.git
 AESD_ASSIGNMENTS_SITE_METHOD = git
+# Ensure this is set to YES if your aesd-assignments repo itself contains submodules
+# (e.g., if it's setup like the base aeld-assignments repo from the class)
 AESD_ASSIGNMENTS_GIT_SUBMODULES = YES
 
-define AESD_ASSIGNMENTS_BUILD_CMDS
-	$(MAKE) $(TARGET_CONFIGURE_OPTS) -C $(@D)/finder-app all
-endef
+# Set the source directory to the 'server' subdirectory within aesd-assignments
+# This tells Buildroot to run 'make' from this specific directory
+AESD_ASSIGNMENTS_SUBDIR = server
 
-# TODO add your writer, finder and finder-test utilities/scripts to the installation steps below
+# Define environment variables for make if needed (e.g., for cross-compilation)
+AESD_ASSIGNMENTS_MAKE_ENV = $(TARGET_MAKE_ENV)
+
+# Define make options. V=1 for verbose output, which can be helpful for debugging.
+# The Makefile in your 'server' directory should handle the compilation.
+AESD_ASSIGNMENTS_MAKE_OPTS = V=1
+
+# Define commands to install the compiled application to the target root filesystem
+# $(TARGET_DIR) is the root directory of the target filesystem being built
 define AESD_ASSIGNMENTS_INSTALL_TARGET_CMDS
-	$(INSTALL) -d 0755 $(@D)/conf/ $(TARGET_DIR)/etc/finder-app/conf/
-	$(INSTALL) -m 0755 $(@D)/conf/* $(TARGET_DIR)/etc/finder-app/conf/
-	$(INSTALL) -m 0755 $(@D)/assignment-autotest/test/assignment4/* $(TARGET_DIR)/bin
-	$(INSTALL) -m 0755 $(@D)/finder-app/writer $(TARGET_DIR)/usr/bin/ #writer app cross compiled
-	$(INSTALL) -m 0755 $(@D)/finder-app/finder.sh $(TARGET_DIR)/usr/bin/ # finder.sh location in assignment 3 repository
-	$(INSTALL) -m 0755 $(@D)/finder-app/finder-test.sh $(TARGET_DIR)/usr/bin/  # finder-test.sh location in assignment 3 repository
-										   # in the assignment instructions it's refering to finder.sh, no such a file
-
+	# Install the aesdsocket executable to /usr/bin
+	$(INSTALL_TARGET_CPROG) $(@D)/server/aesdsocket $(TARGET_DIR)/usr/bin/
 endef
 
+# Define commands to install the init script to the target root filesystem
+# The script is named S99aesdsocket to ensure it starts late in the boot process
+# and has a high priority for shutdown (lower number for stop order).
+define AESD_ASSIGNMENTS_INSTALL_INIT_SYSTEMS
+	# Install the aesdsocket-start-stop script to /etc/init.d/S99aesdsocket
+	$(INSTALL_TARGET_SCRIPT) $(@D)/server/aesdsocket-start-stop $(TARGET_DIR)/etc/init.d/S99aesdsocket
+endef
+
+# This ensures the package is built after the toolchain is ready
 $(eval $(generic-package))
- 
